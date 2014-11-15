@@ -1,0 +1,321 @@
+=encoding utf8
+
+=head1 NAME
+
+desktop-session Session manager / loader
+
+=head1 SYNOPSIS
+
+This program is an intermidiate set of scripts to loading the session.
+It is similar in principle to a glorified ~/.xinitrc. The job of
+desktop-session is to take input from the login manager, and output
+a set of programs / functions in order to load a "session".
+
+=head1 How to Use
+
+Desktop-session is enabled by default to handle login signals from slim.
+Choosing Rox-xxxx or Space-xxxx will be forwarded by slim to 
+desktop-session were it is then determined that you would like to load
+xxxx as the window manager and Rox or Space as the Icon manager. From
+here it uses options set in /etc/desktop-session/desktop-session.conf 
+(OR ~/.desktop-session/desktop-session.conf) to start more items that 
+you would like to see in the session. (Conky for example) There are
+several options that are handled by default (with Full), however it
+is not limited to these options.
+
+=over
+
+=item B<rox-fluxbox>
+
+fluxbox window manager with rox pinboard and other startup apps
+
+=item B<space-fluxbox>
+
+fluxbox window manager with spacefm desktop and other startup apps
+
+=item B<min-fluxbox>
+
+fluxbox only, minimal ram as nothing else is started!
+
+=item B<fluxbox>
+
+fluxbox only, with other startup applications.
+
+=item B<rox-icewm>
+
+icewm window manager with rox pinboard and other startup apps
+
+=item B<space-icewm>
+
+icewm window manager with spacefm desktop and other startup apps
+
+=item B<min-icewm>
+
+icewm only, minimal ram as nothing else is started!
+
+=item B<icewm>
+
+icewm only, with other startup applications.
+
+=item B<rox-jwm>
+
+jwm window manager with rox pinboard and other startup apps
+
+=item B<space-jwm>
+
+jwm window manager with spacefm desktop and other startup apps
+
+=item B<min-jwm>
+
+jwm only, minimal ram as nothing else is started!
+
+=item B<jwm>
+
+jwm only, with other startup applications.
+
+=back
+
+If you wish to start a session from another login manager (or from the CLI via startx)
+you will need to specify desktop-session as the session handling script. 
+
+For example with startx.
+
+log in as user into the console.
+
+type: startx /usr/local/bin/desktop-session DESKTOP-CODE 
+
+Where DESKTOP-CODE is replaced with any of the codes from the above list.
+
+
+=head1 Configuration
+
+Configuration is handled in /etc/desktop-session/desktop-session.conf.
+This is the global configuration file, so be careful! Any changes made 
+in this file will affect all users B<Unless> the user has a user based
+desktop-session.conf file (~/.desktop-session/desktop-session.conf). In
+This case all options specified in the user file will override what is 
+in the global configuration file.
+
+=head3 Configuration Options
+
+=over
+
+=item STARTUP_DELAY="X"
+
+Session service delay.
+
+This is to set how long to delay startup to give enough time for the wm to completely load,
+before starting to load other applications. This wait period will be started after the 
+window manager has been found running ( has a pid ).
+TIME is expressed in seconds
+
+Options: 0-9...
+
+ STARTUP_DELAY="1" 
+
+will delay for 1 second.
+
+ STARTUP_DELAY="10"
+
+will delay for 10 seconds.
+
+This is useful for systems that are not quite fast enough and 
+applications (such as the icon managers) start before the window manager
+finishes loading and therfor end up looking like they are not running.
+
+=item TIMES_TO_CHECK="X"
+
+Session window manager check
+
+This is to set the amount of times desktop-session checks for a running window manager
+before giving up and denying the session to load.
+
+Options: 0-9...
+
+Example:
+
+ TIMES_TO_CHECK="20"
+
+=item FORCE_LOAD="X"
+
+Session give up override
+
+This is to set the override if the window manager is never found to be running by 
+desktop-session after X number of times (Specified above). This will force the 
+session to load if set to true.
+
+Options: true | false
+
+Example:
+ 
+ FORCE_LOAD="true"
+
+=item SESSION_PROTECT="X"
+
+Session Protect.
+This is how to protect the user from automatic updating of any file within desktop-session.
+Examples of automatically updated files are the menu, any file compare within file_compare, etc.
+
+Options for this are: 
+
+=over
+
+=item true 
+
+Strictly protect the user, leave the user to deal with any of the updating
+
+=item ask
+
+Notify me at startup of any changes and allow me to choose what to update
+
+=item false
+
+Just update me, I dont want to worry about falling behind.
+
+=back
+
+Example:
+
+ SESSION_PROTECT="ask" 
+
+=item NOTIFICATION_TEXT="X"
+
+Notification text or program
+
+This is where the text is set for the notification that the session is loading.
+This can be a specified text string or a program that will return a text string
+
+Options:
+
+=over 
+
+=item Session is Loading, Please Wait.....
+
+Specific Text Option. Single line.
+
+=item /usr/games/fortune
+
+Program to return text
+
+=back
+
+Example:
+
+ NOTIFICATION_TEXT="Session is Loading, Please Wait....."
+ 
+ NOTIFICATION_TEXT="/usr/games/fortune"
+
+=item STARTUP_DIALOG="X"
+
+Startup Dialog Enable
+
+This is where to enable or disable the startup dialog.
+When Enabled it will run only once per login, not on restarts or desktop switching.
+
+Options: true | false
+
+Example:
+
+ STARTUP_DIALOG="true"
+ 
+=item STARTUP_DIALOG_CMD="X"
+
+Startup Dialog Command. 
+
+This is where to setup what you would like to run for a startup dialog.
+
+Example:
+ 
+ STARTUP_DIALOG_CMD="yad --image='info' --text='this is my startup dialog'"
+ 
+ STARTUP_DIALOG_CMD="leafpad ~/.startup-text
+ 
+ STARTUP_DIALOG_CMD="/usr/local/lib/desktop-session/startup-dialog.py"
+ 
+=item LOAD_CONKY="X"
+
+Session Load Conky
+
+This is where you set if you would like to load conky or not.
+Loading conky here as apposed to a startup file allows us to incorporate
+conky into you sessions by loading session specific conkyrcs'
+
+If you wish to load a specific conkyrc for a specific window manager, take 
+the name of the window manager, copy your conkyrc to ~/.conky and name /
+rename that conkyrc to WindowManager-conkyrc. If you do not want a session 
+specific conky simply remove all formatted options (rename *.bk) and 
+desktop-session will load the default ~/.conkyrc
+
+Options: true | false
+
+Example:
+
+ LOAD_CONKY="true" 
+ 
+In desktop-session.conf to load conky in general (~/.conkyrc). And 
+copy / make....
+
+ ~/.conky/icewm-conkyrc
+ 
+To load that conkyrc upon loggin into an icewm based session.
+
+=item LOAD_XDG_AUTOSTART="X"
+
+Session Load XDG Autostart enabled items
+
+This will load any application that is setup to autostart via xdg autostart directories /
+.desktop files.
+
+Options: true | false
+
+Example:
+ 
+ LOAD_XDG_AUTOSTART="true"
+ 
+=item LOAD_STARTUP_FILE="X"
+
+Session Load Desktop-session startup
+
+This will enable the global /etc/desktop-session/startup file 
+(or ~/.desktop-session/startup if existing) if enabled. The 
+startup file is in bash script format, so however you would like to 
+run / enable something it is only restrained by what bash can do.
+
+Options: true | false
+
+Example:
+LOAD_STARTUP_FILE="true"
+
+=item SCREEN_BLANK_TIME="X"
+
+Screen Blank Time
+
+This is where you set the time value that it takes for your screen to 
+"blank" (turn off / go blank). The time value is in secconds.
+Please note you can edit this manually, as well as via the set-screen-blank
+app (if installed)
+
+Options: [0-9]....
+
+Example: 
+
+ SCREEN_BLANK_TIME="600"
+
+For 10 minutes
+
+ SCREEN_BLANK_TIME="3600"
+
+For 1 hour
+
+
+=back
+
+=head1 LICENSE
+
+All code is licensed under the 
+L<GPL-v3|https://www.gnu.org/copyleft/gpl.html> or later.
+
+=head1 COPYRIGHT
+
+Copyright 1014
+BitJam for antiX L<http://antix.freeforums.org/>
