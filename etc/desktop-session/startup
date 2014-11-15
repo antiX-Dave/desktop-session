@@ -1,0 +1,4 @@
+#!/bin/bash
+volumeicon &
+desktop-menu --write-out-global 
+fbxkb &
