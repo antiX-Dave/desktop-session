@@ -102,7 +102,6 @@ write_menu() {
     fi
 
     [ -z "$WM_LIST" ] && WM_LIST=$(wm_list)
-    echo $WM_LIST
 
     local start_menu end_menu entry start_file end_file
     local outer_menu
