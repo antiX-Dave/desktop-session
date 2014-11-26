@@ -260,7 +260,7 @@ launch_desktop() {
             else
                 echo_cmd sleep $STARTUP_DELAY && conky
             fi
-            wmctrl -F -r "Conky ($HOST)" add,below
+            wmctrl -F -r "Conky ($(hostname))" -b add,below
         fi
         
         #Finally Set the screen blank time / screen saver
