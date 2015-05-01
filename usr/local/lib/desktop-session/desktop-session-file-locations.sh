@@ -1,5 +1,14 @@
+#!/bin/bash
+pathname="$_";
 disp=${DISPLAY#:}
 disp=${disp%.[0-9]}
+
+#Config list for configuration / editing
+edit_list_main="$main_config $first_run_script $main_startup_file $main_compare_file"
+edit_list_user="$user_config $default_desktop_file $user_startup_file $user_file_compare $log_file"
+#Start Editor with edit files if called directly and not sourced.
+[[ $pathname = $0 ]] && exec "geany $edit_list_main $edit_list_user";
+
 
 #Desktop-session Directories
 main_dts_dir="/etc/desktop-session";
@@ -54,3 +63,4 @@ xs_dir="/usr/share/xsessions";
 
 #Slim Config
 slim_conf="/etc/slim.conf";
+
