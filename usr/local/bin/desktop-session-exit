@@ -27,6 +27,7 @@ case $1 in
     dbus-send --system --print-reply --dest="org.freedesktop.UPower" /org/freedesktop/UPower org.freedesktop.UPower.Hibernate
     ;;
 -s|--shutdown)
+    sync;
     if which persist-config &> /dev/null; then
         sudo persist-config --shutdown --command poweroff
     else
@@ -37,6 +38,7 @@ case $1 in
     dbus-send --system --print-reply --dest="org.freedesktop.UPower" /org/freedesktop/UPower org.freedesktop.UPower.Suspend
     ;;
 -r|--reboot)
+    sync;
     if which persist-config &> /dev/null; then
         sudo persist-config --shutdown --command reboot
     else
