@@ -1,0 +1,18 @@
+
+You may need to change some things like the grep criteria and the CPU threshold but here it goes:
+
+#!/bin/bash
+cd $RUN_DIR
+nohup ./CloudServer >& /dev/null &
+PID=`ps aux |grep $RUN_DIR/CloudServer|grep -v grep| head -n 1 |awk '{print $2}'`
+
+while [ `top -n 1 -b -p $PID | grep $PID |awk '{print $9"/1"}' |bc` -gt 1 ]
+do
+        sleep 2
+        echo Server still starting up ...
+done
+echo Server is now Idle
+nohup ./CloudClient --server=localhost --username=$ROBOT1_NAME --robot >& /dev/null &
+nohup ./CloudClient --server=localhost --username=$ROBOT2_NAME --robot >& /dev/null &
+
+You may change the sleep time, if you wish, too.
