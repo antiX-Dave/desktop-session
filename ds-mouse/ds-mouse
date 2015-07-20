@@ -1,0 +1,69 @@
+#!/bin/bash
+#Name: ds-mouse
+#Depends: ds-mouse.py, xset
+#Author: Dave (david@daveserver.info)
+#Purpose: Configure mouse on per user basis for a session. This is the gui frontend
+
+conf_dir="$HOME/.desktop-session"
+conf_file="$conf_dir/mouse.conf"
+if [ ! -f "$conf_file" ]; then
+    conf_file="/etc/desktop-session/mouse.conf"
+fi
+
+function acceleration() {
+    acceleration="$(cat $conf_file | grep '^ACCELERATION' |cut -d '=' -f2 |cut -d ' ' -f2)"
+    threshold="$(cat $conf_file | grep '^THRESHOLD' |cut -d '=' -f2 |cut -d ' ' -f2)"
+    if [ "$acceleration" -gt 0 -a "$acceleration" -lt 101 ] && [ "$threshold" -gt 0 -a "$threshold" -lt 101 ]; then
+       xset m "$acceleration" "$threshold"
+    else
+       xset m default
+    fi
+}
+
+function buttonorder() {
+    buttonorder="$(cat $conf_file | grep '^BUTTONORDER' |cut -d '=' -f2 |cut -d ' ' -f2)"
+    case $buttonorder in
+        0)    xmodmap -e 'pointer = 1 2 3 4 5' ;;
+        1)    xmodmap -e 'pointer = 3 2 1 4 5' ;;
+        *)    xmodmap -e 'pointer = 1 2 3 4 5' ;;
+    esac
+}
+
+function size() {
+    size="$(cat $conf_file | grep '^SIZE' |cut -d '=' -f2 |cut -d ' ' -f2)"
+    #file="$HOME/\.Xdefaults";
+    file="$HOME/.Xdefaults";
+    if cat $file |grep "Xcursor.size:"  > /dev/null ; then
+        if [ "$size" = '0' ]; then
+            sed -n -i "s/Xcursor\.size*//ig" $file
+        else
+            sed -i "s/Xcursor\.size.*/Xcursor\.size:$size/ig" $file
+        fi
+    else
+        echo "Xcursor.size:$size" > $file
+    fi
+}
+
+function help() {
+    echo "Help:";
+    echo "-a   | set mouse motion (acceleration and threshold)";
+    echo "-b   | set button order for left and right hand";
+    echo "-s   | set cursor size";
+    echo "-all | set mouse motion, button order, and cursor size";
+    echo "-h   | show this help dialog";
+    echo "No option start settings gui";
+}
+
+action="$1" && shift;
+case  $action in 
+    -a)	acceleration ;;
+    -o) buttonorder  ;;
+    -s) size         ;;
+    -all)
+        acceleration;
+        buttonorder;
+        size;
+    ;;
+    -h) help         ;;
+    *)  ./ds-mouse.py ;;
+esac
