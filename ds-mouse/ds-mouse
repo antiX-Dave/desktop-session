@@ -23,9 +23,9 @@ function acceleration() {
 function buttonorder() {
     buttonorder="$(cat $conf_file | grep '^BUTTONORDER' |cut -d '=' -f2 |cut -d ' ' -f2)"
     case $buttonorder in
-        0)    xmodmap -e 'pointer = 1 2 3 4 5' ;;
-        1)    xmodmap -e 'pointer = 3 2 1 4 5' ;;
-        *)    xmodmap -e 'pointer = 1 2 3 4 5' ;;
+        0)    xmodmap -e 'pointer = 1 2 3 4 5' > /dev/null 2>&1 ;;
+        1)    xmodmap -e 'pointer = 3 2 1 4 5' > /dev/null 2>&1 ;;
+        *)    xmodmap -e 'pointer = 1 2 3 4 5' > /dev/null 2>&1 ;;
     esac
 }
 
@@ -65,5 +65,5 @@ case  $action in
         size;
     ;;
     -h) help         ;;
-    *)  ./ds-mouse.py ;;
+    *)  /usr/local/bin/ds-mouse.py ;;
 esac

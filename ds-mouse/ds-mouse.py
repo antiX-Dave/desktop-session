@@ -113,9 +113,9 @@ class mainWindow():
         self.framebox.pack_start(label)
         label.show()
         
-    def scale_set_default_values(self, scale):
+    def scale_set_default_values(self, scale, option):
         scale.set_update_policy(gtk.UPDATE_CONTINUOUS)
-        scale.set_digits(0)
+        scale.set_digits(option)
         scale.set_value_pos(gtk.POS_TOP)
         scale.set_draw_value(True)
 
@@ -132,10 +132,10 @@ class mainWindow():
         self.make_frame("Mouse Acceleration")
         self.make_label("Acceleration (Multiplier)")
         
-        adj1 = gtk.Adjustment(float(Var.ACCELERATION), 0.0, 101.0, 1.0, 1.0, 1.0 )
+        adj1 = gtk.Adjustment(float(Var.ACCELERATION), 0.0, 21.0, 0.1, 1.0, 1.0 )
         self.acceleration = gtk.HScale(adj1)
         self.acceleration.set_size_request(200, 45)
-        self.scale_set_default_values(self.acceleration)
+        self.scale_set_default_values(self.acceleration, 1)
         self.framebox.pack_start(self.acceleration)
         self.acceleration.show()
         
@@ -144,7 +144,7 @@ class mainWindow():
         adj1 = gtk.Adjustment(float(Var.THRESHOLD), 0.0, 101.0, 1.0, 1.0, 1.0 )
         self.threshold = gtk.HScale(adj1)
         self.threshold.set_size_request(200, 45)
-        self.scale_set_default_values(self.threshold)
+        self.scale_set_default_values(self.threshold, 1)
         self.framebox.pack_start(self.threshold)
         self.threshold.show()
         
@@ -168,7 +168,7 @@ class mainWindow():
         adj1 = gtk.Adjustment(float(Var.SIZE), 0.0, 51.0, 1.0, 1.0, 1.0 )
         self.size = gtk.HScale(adj1)
         self.size.set_size_request(200, 45)
-        self.scale_set_default_values(self.size)
+        self.scale_set_default_values(self.size, 0)
         self.framebox.pack_start(self.size)
         self.size.show()
         
