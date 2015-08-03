@@ -13,9 +13,10 @@ fi
 function acceleration() {
     acceleration="$(cat $conf_file | grep '^ACCELERATION' |cut -d '=' -f2 |cut -d ' ' -f2)"
     threshold="$(cat $conf_file | grep '^THRESHOLD' |cut -d '=' -f2 |cut -d ' ' -f2)"
-    if [ "$acceleration" -gt 0 -a "$acceleration" -lt 101 ] && [ "$threshold" -gt 0 -a "$threshold" -lt 101 ]; then
+    if [ "$acceleration" -gt -1 -a "$acceleration" -lt 17 ] && [ "$threshold" -gt -1 -a "$threshold" -lt 101 ]; then
        xset m "$acceleration" "$threshold"
     else
+       echo "out-of-range value for acceleration or threshold, so applying xset default values"
        xset m default
     fi
 }
@@ -31,16 +32,16 @@ function buttonorder() {
 
 function size() {
     size="$(cat $conf_file | grep '^SIZE' |cut -d '=' -f2 |cut -d ' ' -f2)"
-    #file="$HOME/\.Xdefaults";
     file="$HOME/.Xdefaults";
-    if cat $file |grep "Xcursor.size:"  > /dev/null ; then
-        if [ "$size" = '0' ]; then
-            sed -n -i "s/Xcursor\.size*//ig" $file
-        else
+
+    if [ "$size" -gt 9 -a "$acceleration" -lt 51 ]; then
+        if cat $file |grep "Xcursor.size:"  > /dev/null ; then
             sed -i "s/Xcursor\.size.*/Xcursor\.size:$size/ig" $file
+        else
+            echo "Xcursor.size:$size" > $file
         fi
     else
-        echo "Xcursor.size:$size" > $file
+        sed -n -i "s/Xcursor\.size*//ig" $file > /dev/null 2>&1
     fi
 }
 

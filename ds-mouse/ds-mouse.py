@@ -11,22 +11,19 @@ import gettext
 gettext.install("antixccmouse.sh", "/usr/share/locale")
 class Error:
     def __init__(self, error):
-       cmdstring = "yad --image=\"error\"\
-       --title=\"Error\"\
-       --text=\"There is an error,\
-       \nplease rerun and correct the following error!\
-       \n\n%s\n\"\
-       --button=\"gtk-ok:0\"" % (error)
-       os.system(cmdstring) 
+        dlg = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_CLOSE, message_format=_("There is an error,\nplease rerun and correct the following error!")+"\n\n"+error)
+        dlg.set_title(_("Successfully updated"))
+        dlg.set_keep_above(True) # note: set_transient_for() is ineffective!
+        dlg.run()
+        dlg.destroy() 
        
 class Success:
     def __init__(self, success):
-       cmdstring = "yad --image=\"info\"\
-       --title=\"Success\"\
-       --text=\"Successfully Updated:\
-       \n\n%s\n\"\
-       --button=\"gtk-ok:0\"" % (success)
-       os.system(cmdstring) 
+        dlg = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_INFO, gtk.BUTTONS_CLOSE, message_format=_("Successfully updated")+":\n\n"+success)
+        dlg.set_title(_("Successfully updated"))
+        dlg.set_keep_above(True) # note: set_transient_for() is ineffective!
+        dlg.run()
+        dlg.destroy() 
        
 class Var: 
     def read(self):        
@@ -81,21 +78,37 @@ class mainWindow():
             Var().write('THRESHOLD', threshold_value)
             Var().write('SIZE', size_value)
             Var().write('BUTTONORDER', button_order_value)
-            os.system("ds-mouse -all")
+            try:
+                os.system("ds-mouse -all")
+            except:
+                Error(_("Could not run ds-mouse -all"))
+            else:
+				Success(_("All Options Set"))
         elif option == 1: #reset motion button
-            acceleration_value = '0'
-            threshold_value = '0'
+            acceleration_value = '-1'
+            threshold_value = '-1'
             Var().write('ACCELERATION', acceleration_value)
             Var().write('THRESHOLD', threshold_value)
-            os.system("ds-mouse -all")
+            try:
+                os.system("ds-mouse -a")
+            except:
+                Error(_("Could not run ds-mouse -a"))
+            else:
+				Success(_("Mouse Acceleration Reset"))
         elif option == 2: #reset size button
-            size_value = '0'
+            size_value = '-1'
             Var().write('SIZE', size_value)
-            os.system("ds-mouse -all")
+            try:
+                os.system("ds-mouse -s")
+            except:
+                Error(_("Could not run ds-mouse -s"))
+            else:
+				Success(_("Cursor Size Reset"))
         elif option == 3: #change cursor theme button
-            os.system("rxvt-unicode -tr -sh 65 -fg white -T 'cursor theme' -e su -c 'update-alternatives --config x-cursor-theme' ")
-        
-        Success(_("Options Changed"))
+            try:
+                os.system("lxappearance")
+            except:
+                os.system("rxvt-unicode -tr -sh 65 -fg white -T 'cursor theme' -e su -c 'update-alternatives --config x-cursor-theme' ")
 		
     def make_frame(self, text):
         frame = gtk.Frame(_(text))
@@ -121,7 +134,6 @@ class mainWindow():
 
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        #window.set_width(250)
         window.set_title(_("Mouse Options"))
         window.connect("destroy", lambda w: gtk.main_quit())
         
@@ -132,7 +144,7 @@ class mainWindow():
         self.make_frame("Mouse Acceleration")
         self.make_label("Acceleration (Multiplier)")
         
-        adj1 = gtk.Adjustment(float(Var.ACCELERATION), 0.0, 21.0, 0.1, 1.0, 1.0 )
+        adj1 = gtk.Adjustment(float(Var.ACCELERATION), 0.0, 17.0, 0.1, 1.0, 1.0 )
         self.acceleration = gtk.HScale(adj1)
         self.acceleration.set_size_request(200, 45)
         self.scale_set_default_values(self.acceleration, 1)
@@ -148,7 +160,7 @@ class mainWindow():
         self.framebox.pack_start(self.threshold)
         self.threshold.show()
         
-        reset_motion = gtk.Button(stock=gtk.STOCK_UNDO)
+        reset_motion = gtk.Button(stock=gtk.STOCK_REVERT_TO_SAVED)
         reset_motion.connect("clicked", self.apply, 1)
         self.framebox.pack_start(reset_motion)
         reset_motion.show()
@@ -165,20 +177,20 @@ class mainWindow():
         self.make_frame("Cursor Size")
         self.make_label("Size (in pixels)")
         
-        adj1 = gtk.Adjustment(float(Var.SIZE), 0.0, 51.0, 1.0, 1.0, 1.0 )
+        adj1 = gtk.Adjustment(float(Var.SIZE), 10.0, 51.0, 1.0, 1.0, 1.0 )
         self.size = gtk.HScale(adj1)
         self.size.set_size_request(200, 45)
         self.scale_set_default_values(self.size, 0)
         self.framebox.pack_start(self.size)
         self.size.show()
         
-        reset_size = gtk.Button(stock=gtk.STOCK_UNDO)
+        reset_size = gtk.Button(stock=gtk.STOCK_REVERT_TO_SAVED)
         reset_size.connect("clicked", self.apply, 2)
         self.framebox.pack_start(reset_size)
         reset_size.show()
         
         self.make_frame("Cursor Theme")
-        self.make_label("After choosing a new theme, \nplease logout/login to see the changes.\n")
+        self.make_label("May require logout/login \nto see the changes.\n")
         
         theme = gtk.Button(_("Change cursor theme"))
         theme.connect("clicked", self.apply, 3)
