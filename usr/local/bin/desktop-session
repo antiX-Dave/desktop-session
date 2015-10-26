@@ -100,6 +100,12 @@ launch_wm() {
         . $config
     done
     
+    if [ "$STARTUP_SOUND" = 'true' ]; then
+        if [ -f "$STARTUP_SOUND_FILE" ]; then
+            play "$STARTUP_SOUND_FILE" &
+        fi
+    fi
+    
     if [ "$NOTIFICATION_DIALOG" = 'true' ]; then
         #Determine startup notification text, either  via program return or text.
         #CLEAN_NOTIFICATION_TEXT=$(echo $NOTIFICATION_TEXT |sed "s/\"//ig"|sed "s/'//ig" )
@@ -198,7 +204,11 @@ launch_desktop() {
         esac
         
         #Set wallpaper
+        sleep $STARTUP_DELAY;
         echo_cmd desktop-session-wallpaper;
+
+        #Build Applications menu here rather than startup file?PB
+        echo_cmd desktop-menu --write-out-global;
         
         #Check if the user would prefer their files not to be updated, if not protected... update or ask to update
         if [ "$SESSION_PROTECT" != "true" ]; then
