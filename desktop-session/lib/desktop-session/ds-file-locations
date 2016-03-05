@@ -1,0 +1,66 @@
+#!/bin/bash
+#Name: ds-file-locations
+#Purpose: Set where various desktop-session files and scripts will be
+#Author: Dave. david at daveserver dot info
+
+pathname="$_";
+disp=${DISPLAY#:}
+disp=${disp%.[0-9]}
+
+#Config list for configuration / editing the desktop-session configuration
+edit_list="$ds_config $ds_first_run $ds_startup $ds_compare";
+
+#Desktop-Session Directories
+ds_config_dir="$HOME/.desktop-session";
+ds_run_dir="$ds_config_dir/run";
+ds_lib_dir="/home/David/git-projects/desktop-session/desktop-session/lib/desktop-session";
+ds_share_dir="/home/David/git-projects/desktop-session/desktop-session/share/desktop-session";
+
+#Desktop-session Log File
+ds_log_file="$ds_config_dir/log";
+
+#Desktop-session Configuration file
+ds_config="$ds_config_dir/desktop-session.conf";
+ds_default_desktop="$ds_config_dir/default-desktop"; #Would like to place this in the ds_config file
+ds_startup="$ds_config_dir/startup";
+ds_compare="$ds_config_dir/compare";
+ds_first_run_trigger="$ds_config_dir/ds-first-run";
+
+#Desktop-session scripts
+ds_lib_main="$ds_lib_dir/ds-lib-main";
+ds_session_variables="$ds_lib_dir/ds-session-variables";
+ds_first_run="$ds_lib_dir/ds-first-run";
+ds_logout="$ds_lib_dir/ds-logout";
+ds_restart="$ds_lib_dir/ds-restart";
+ds_exit_gui="$ds_lib_dir/ds-exit.py";
+ds_exit="desktop-session-exit";
+ds_update_wm_menus="$ds_lib_dir/ds-update-wm-menus";
+
+#Process files / trigger files / run files
+signal_files="$gpid_file $ppid_file $restart_file $desktop_file $icon_pid_file $cycle_file"
+gpid_file="$ds_run_dir/startup-gpid.$disp";
+ppid_file="$ds_run_dir/ppid.$disp";
+restart_file="$ds_run_dir/restart.$disp";
+desktop_file="$ds_run_dir/desktop-code.$disp";
+icon_pid_file="$ds_run_dir/icon-pid.$disp";
+cycle_file="$ds_run_dir/cycle-wm.$disp";
+
+#Conky Files
+conky_dir="$HOME/.conky";
+
+#Resources
+xmodmap_config="$HOME/.xmodmap";
+xresources_config="$HOME/.Xresources";
+user_xdg_autostart="$HOME/.config/autostart";
+main_xdg_autostart="/etc/xdg/autostart";
+std_log_speech="$ds_lib_dir/std-log-speech";
+
+#Xsessions
+xs_dir="/usr/share/xsessions";
+
+#Slim Config
+slim_conf="/etc/slim.conf";
+
+#Start Editor with edit files if called directly and not sourced.
+[[ $pathname = $0 ]] && exec "desktop-defaults-run -te $edit_list";
+

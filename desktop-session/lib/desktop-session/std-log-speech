@@ -1,0 +1,73 @@
+#!/bin/bash
+#Name: std-log-speech
+#Purpose: Write strings to logs / display
+#Author: Dave. david at daveserver dot info
+#Inspiration / Content from: BitJam logging functions
+
+ME=${0##*/}
+
+NO_COLOUR="\[\033[0m\]"
+RED="\e[31m"
+YELLOW="\e[33m"
+GREEN="\e[32m"
+BLUE="\e[34m"
+
+say() { 
+    echo "$ME: $*"; 
+}
+
+psay() { 
+    say "$(plural "$@")"; 
+}
+
+log() {
+    say "$*" >> "$LOG"; 
+}
+
+shout() {
+    say "$*"; 
+    log "$*"; 
+}
+
+fatal() {
+    echo -e "$RED"
+    shout "Fatal Error: $*" 
+    echo -e "$NO_COLOR"
+    #exit 2
+}
+
+warn() { 
+    echo -e "$YELLOW"
+    shout "Warning: $*"; 
+    echo -e "$NO_COLOR"
+}
+
+echo_variable() {
+    echo -e "$BLUE"
+    shout "Setting environment variable: $*"
+    echo -e "$NO_COLOR"
+    export "$@"
+}
+
+echo_cmd() {
+    echo -e "$GREEN"
+    shout "Running: $*"
+    echo -e "$NO_COLOR"
+    "$@"
+}
+
+echo_eval_cmd() {
+    echo -e "$GREEN"
+    shout "Running: eval $*"
+    echo -e "$NO_COLOR"
+    eval "$@" &
+}
+
+echo_bg_cmd() {
+    echo -e "$GREEN"
+    shout "Running: $* &"
+    echo -e "$NO_COLOR"
+    "$@" &
+}
+
+

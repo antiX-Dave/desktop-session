@@ -1,0 +1,5 @@
+#!/bin/bash
+#Name: ds-lib-main
+
+fallback_desktop='rox-fluxbox'
+fallback_wmx="/usr/bin/icewm-session /usr/bin/startfluxbox"

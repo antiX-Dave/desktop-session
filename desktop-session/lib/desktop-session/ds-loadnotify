@@ -1,0 +1,86 @@
+#!/usr/bin/python
+
+import pygtk
+pygtk.require('2.0')
+import gtk, gobject
+import sys
+import signal
+import os
+
+pid = str(os.getpid())
+pidfile = os.path.expanduser("~/.desktop-session/ds-loading.pid")
+writepid = open(pidfile, "w")
+writepid.write("%s" % os.getpid())
+writepid.close()
+
+class ProgressBar:    
+    
+    # Update the value of the progress bar so that we get
+    # some movement
+    def progress_timeout(pbobj):
+        pbobj.pbar.pulse()
+        return True
+    
+    def close(self, widget):
+        print "Closing"
+        print "Cleaning up"
+        gobject.source_remove(self.timer)
+        self.timer = 0
+        os.unlink(pidfile)
+        gtk.main_quit()
+
+    def __init__(self):
+        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window.set_resizable(False)
+        self.window.set_decorated(False)
+        self.window.stick()
+        self.window.set_keep_above(True)
+        self.window.connect("destroy", self.close)
+        
+        vbox = gtk.VBox(False, 5)
+        vbox.set_border_width(10)
+        self.window.add(vbox)
+        vbox.show()
+        
+        label = gtk.Label()
+        label.set_text("%s" % ' '.join(sys.argv[1:]))
+        label.set_line_wrap(True)
+        vbox.pack_start(label)
+        label.show()
+        
+        separator = gtk.HSeparator()
+        vbox.pack_start(separator, False, False, 0)
+        separator.show()
+ 
+        # Create the ProgressBar
+        self.pbar = gtk.ProgressBar()
+        vbox.pack_start(self.pbar)
+        self.pbar.show()
+
+        # Add a timer callback to update the value of the progress bar
+        self.timer = gobject.timeout_add (100, self.progress_timeout)
+
+        # Add a button to exit the program
+        button = gtk.Button("close")
+        button.connect("clicked", self.close)
+        vbox.pack_start(button, False, False, 0)
+        button.show()
+
+        self.window.show()
+        
+        gobject.timeout_add(30000, self.close, '')
+        
+def main():    
+    def my_sigint_trap(signum, frame):
+        ui.close('')
+
+    ui = ProgressBar()
+    #signal.signal(signal.SIGTERM signal.SIGINT signal.SIGHUP, my_sigint_trap)
+    for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        signal.signal(sig, my_sigint_trap)
+    gtk.main()
+
+
+if __name__ == "__main__":
+    main()
+    

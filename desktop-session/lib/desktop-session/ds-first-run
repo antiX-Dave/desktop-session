@@ -1,0 +1,39 @@
+#!/bin/bash
+#Name: ds-first-run
+#Purpose: setup desktop-session session files and other items to build
+a session (build menus, copy desktop icons, etc)
+#Author: Dave. david at daveserver dot info
+
+#Load File Mappings
+. ./desktop-session-file-locations.sh
+#Load "speech" for loging / displaying information to errors
+. $std_log_speech
+
+#Skel directory
+SKEL="/etc/skel/.desktop-session"
+
+#Check for configuration directory, otherwise copy from skel
+[ ! -d $ds_config_dir ] && echo_cmd cp $SKEL $ds_config_dir;
+#Check for run directory, otherwise make
+[ ! -d $ds_run_dir ] && echo_cmd mkdir -p $ds_run_dir;
+#Check for default desktop file, otherwise copy from skel
+[ ! -f $ds_default_desktop ] && echo_cmd cp $SKEL/default-desktop $ds_default_desktop
+#Check for default startup file, otherwise copy from skel
+[ ! -f $ds_startup ] && echo_cmd cp $SKEL/startup $ds_startup
+#Check for default comparison file, otherwise copy from skel
+[ ! -f $ds_compare ] && echo_cmd cp $SKEL/compare $ds_compare
+
+#Make Menu files
+#Applications Menu
+echo_bg_cmd desktop-menu --write-out-global
+#Personal Menu
+echo_bg_cmd desktop-menu --menu-file='/etc/xdg/menus/TCM-MENU.menu' --write-out --write-out-file='personal'
+
+#Copy over desktop files
+cp /usr/share/applications/antix/file-manager.desktop $XDG_DESKTOP_DIR 
+cp /usr/share/applications/antix/antiX-docs.desktop $XDG_DESKTOP_DIR 
+cp /usr/share/applications/antix/antixsources.desktop $XDG_DESKTOP_DIR
+
+#Make trigger file to avoid consuming time running the above checks and 
+#commands every startup event.
+touch $ds_first_run_trigger

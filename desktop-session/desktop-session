@@ -1,0 +1,196 @@
+#!/bin/bash
+# desktop-session desktop-code [wm executable]
+#
+# Launch icon manager from desktop-code.  Then launch
+# the for the desktop-code in the foreground.
+
+#Load File Mappings
+. ./desktop-session-file-locations.sh
+#Load Main Configuration
+. $ds_lib_main
+#Load "speech" for loging / displaying information to errors setting LOG
+LOG="$ds_log_file";
+. $std_log_speech
+
+#Load Session Variables
+. $ds_session_variables
+
+#Check if this is the first run
+[ ! -f $ds_first_run_trigger ] && echo_cmd $ds_first_run;
+
+#Check for default configuration file, otherwise copy from skel
+[ ! -f $ds_config ] && echo_cmd cp $SKEL/desktop-session.conf $ds_config
+
+#Check if current log file exists, if it does move it to *.old 
+[ -e $ds_log_file ] && mv $ds_log_file $ds_log_file.old
+
+#Load Window Manager, Icon Manager, and Session
+launch_wm() {
+    local im wm valid_wm  code=${1:-@default}
+    shout "launch $* @ $(cut  -d" " -f22 /proc/self/stat)"
+    command shift 1
+
+    #See if code was passed, if not try to get default, if cannot use fallback 
+    if [ $code = @default ]; then 
+        code=$(cat $ds_default_desktop 2>/dev/null)
+        if [ -z "$code" ]; then
+            code=$fallback_desktop
+            log "Empty or missing default desktop file: $ds_default_desktop"
+            log "using fallback desktop: $code"
+        fi
+    fi
+    
+    #Change uppercase to Lowercase and space to underscore
+    code=$(echo "$code" | tr "[A-Z ]" "[a-z_]")
+    
+    # Strip off the optional icon manager from the front of the code
+    case $code in
+        space-*) wm=${code#space-}; im=space; valid_wm=$space_enabled;;
+        rox-*)   wm=${code#rox-};   im=rox;   valid_wm=$rox_enabled;;
+        none-*)  wm=${code#none-};  im=none;;  
+        min-*)   wm=${code#min-};   im=min;;           
+        *)       wm=$code;          im=none;;
+    esac
+    
+    # Make sure wm is in list of valid WMs for the icon manager.
+    # An empty $valid_wm will match the first clause.  A valid wm
+    # will cause the second clause to match.
+    case ,$valid_wm, in
+        ,,)      
+            ;;
+        *,$wm,*) 
+            ;;
+        *)       
+            warn "Window manager $wm is not compatiable with $im icons"
+            warn "Disabling icon manager"
+            im=none ;;
+    esac
+    
+    get_wm_exec "$wm" || fatal "No executable found for $wm"
+    
+    shout "Saving desktop code: $code"
+    echo $$    > $ppid_file
+    echo $code > $desktop_file
+    
+    shout "Exporting desktop Variables:"
+    echo_variable "DESKTOP_SESSION_CODE=$code"
+    echo_variable "DESKTOP_SESSION_WM=$wm"
+    echo_variable "DESKTOP_SESSION_IM=$im"
+    
+    
+
+########################################################################
+########   BREAK FROM ANALYZING AND UPDATING DESKTOP-SESSION   #########
+########################################################################
+>> $ds_log_file.output 2>&1
+
+}
+
+#Get the executable file for the window manager in the provided code.
+get_wm_exec() {
+    unset WM_EXEC
+    local wm_exec  code=$1
+    if [ -n "$code" -a -z "${code##/*}" ]; then
+        wm_exec=$code
+    else
+        wm_exec=$(find_wm_exec "$code")
+    fi
+
+    if ! [ -n "$wm_exec" -a -z "${wm_exec##/*}" ]; then
+        local full=$(which $wm_exec 2>/dev/null)
+        [ -z "$full" ] && fatal "Could not find \"$wm_exec\" on path $PATH"
+        wm_exec=$full
+    fi
+
+    if [ -x $wm_exec ]; then
+        WM_EXEC=$wm_exec
+        return 0
+    fi
+
+    warn "$wm_exec either not found or not executable"
+
+    [ "$fallback_wmx" ] || return 1
+
+    warn "trying fallbacks: $fallback_wmx"
+
+    for wm_exec in $fallback_wmx; do
+        [ -x $wm_exec ] && break
+    done
+
+    [ -x $wm_exec ] || return 1
+    WM_EXEC=$wm_exec
+    return 0
+}
+
+#------------------------------------------------------------------------------
+# Function: find_wm_exec <wm-code>
+#
+# Find the executable associated with <wm-code>.  First look it up in a case
+# statement.  If it was not found in the case statement or if the executable
+# found in the case statement is non-existant or not executable then we fall
+# back to looking in /usr/share/xsession/*.desktop via find_xsessions_exec().
+#------------------------------------------------------------------------------
+find_wm_exec() {
+    local wm_exec wm_code=$1
+
+    log "look up executable for $wm_code"
+
+    case $wm_code in
+          icewm) wm_exec=/usr/bin/icewm-session ;;
+        fluxbox) wm_exec=/usr/bin/startfluxbox  ;;
+            jwm) wm_exec=/usr/bin/jwm           ;;
+           wmii) wm_exec=/usr/bin/wmii          ;;
+    esac
+
+    if [ -x "$wm_exec" ]; then
+        echo "$wm_exec"
+    else
+        [ "$wm_exec" ] && log "$wm_exec either not found or not executable"
+        find_xsessions_exec "$wm_code"
+    fi
+}
+
+find_xsessions_exec() {
+    local wm=$1  dir=$xs_dir
+
+    log "search $dir for executable for $wm"
+
+    local file=$(grep -i -l "^Name=$wm$" $dir/*.desktop| head -n 1)
+    [ "$file" ] || file=$(grep -i -l "^Name=$wm desktop$" $dir/*.desktop| head -n 1)
+    [ "$file" ] || file=$(grep -i -l "^Name=$wm session$" $dir/*.desktop| head -n 1)
+    [ "$file" ] || return
+    grep ^Exec= "$file" | cut -d= -f2
+}
+
+#When EXIT signal received remove signal files
+on_exit() {
+    log "running on_exit code"
+    rm -f $signal_files
+}
+
+#Start main loop
+main() {
+    local code=$1
+
+    rm -f $signal_files
+
+    trap on_exit EXIT
+
+    unset RESTART_CODE 
+    while true; do
+        launch_wm "$code"
+        get_restart_code $restart_file || break
+        wm_exec=
+        code=$RESTART_CODE 
+        say "restart $code"
+    done
+}
+
+start_time=$(cut -d" " -f22 /proc/$$/stat | sed -r 's/(..)$/.\1/')
+shout "Started $(date) Start_time: $start_time"
+shout "PID: $$"
+shout "Logging to: $ds_log_file"
+
+main "$@" 
+
+shout "exiting normally"
