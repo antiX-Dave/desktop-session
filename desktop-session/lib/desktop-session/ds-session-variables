@@ -4,7 +4,11 @@
 #look for. Such as XDG_DATA_HOME, XDG_CONFIG_HOME, GTK_RCs', etc
 #Author: Dave. david at daveserver dot info
 
-. /home/David/git-projects/desktop-session/desktop-session/lib/desktop-session/ds-file-locations;
+#Load File Mappings
+. /usr/local/lib/desktop-session/ds-file-locations
+
+#Load "speech" for loging / displaying information to errors setting LOG
+LOG="$ds_log_file";
 . $std_log_speech
 
 function LOCATIONS {

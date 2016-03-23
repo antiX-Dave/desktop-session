@@ -5,24 +5,39 @@
 # the for the desktop-code in the foreground.
 
 #Load File Mappings
-. ./desktop-session-file-locations.sh
+. /usr/local/lib/desktop-session/ds-file-locations
+
 #Load Main Configuration
 . $ds_lib_main
+
 #Load "speech" for loging / displaying information to errors setting LOG
 LOG="$ds_log_file";
 . $std_log_speech
 
-#Load Session Variables
-. $ds_session_variables
+#Check if current log file exists, if it does move it to *.old 
+[ -e $ds_log_file ] && mv $ds_log_file $ds_log_file.old
 
-#Check if this is the first run
+#Load Session Sourcable Scripts
+for SourceScript in "${ds_source_list[@]}"
+do 
+    if [ -r $SourceScript ]; then
+        shout "Sourcing: $SourceScript";
+        source $SourceScript
+    fi
+done
+
+#Check if this is the first run and run the first run script if it is
 [ ! -f $ds_first_run_trigger ] && echo_cmd $ds_first_run;
 
 #Check for default configuration file, otherwise copy from skel
 [ ! -f $ds_config ] && echo_cmd cp $SKEL/desktop-session.conf $ds_config
-
-#Check if current log file exists, if it does move it to *.old 
-[ -e $ds_log_file ] && mv $ds_log_file $ds_log_file.old
+#Check configuration file is 'safe' to use
+[ ! -r $ds_config ] && fatal "$ds_config is not readable"
+if ! /bin/bash -n $ds_config; then
+    fatal "Errors in $ds_config, cannot load $ds_config."
+else
+    . $ds_config
+fi
 
 #Load Window Manager, Icon Manager, and Session
 launch_wm() {
@@ -68,22 +83,162 @@ launch_wm() {
     
     get_wm_exec "$wm" || fatal "No executable found for $wm"
     
+    #Record pid and code
     shout "Saving desktop code: $code"
     echo $$    > $ppid_file
     echo $code > $desktop_file
     
+    #Export variables for the desktop session code type
     shout "Exporting desktop Variables:"
     echo_variable "DESKTOP_SESSION_CODE=$code"
     echo_variable "DESKTOP_SESSION_WM=$wm"
     echo_variable "DESKTOP_SESSION_IM=$im"
     
+    #Check if the code makes a "minimum" condition, if so disable startup items
+    #Else enable startup (if disabled) and launch desktop items
+    if [ "$im" = "min" ]; then
+        [ -f "~/.$wm/startup" ] && mv ~/.$wm/startup ~/.$wm/startup.disabled
+    else
+        [ -f "~/.$wm/startup.disabled" ] && mv ~/.$wm/startup.disabled ~/.$wm/startup;
+        launch_desktop & launch_desktop_pid=$! ;
+    fi
     
+    # Always save the lastest choice as the default
+    echo $code > $ds_default_desktop
 
-########################################################################
-########   BREAK FROM ANALYZING AND UPDATING DESKTOP-SESSION   #########
-########################################################################
->> $ds_log_file.output 2>&1
+    # Start Window Manager
+    echo_cmd $WM_EXEC
+    rm -f $desktop_file
 
+}
+
+launch_desktop() {  
+    
+    #Play startup sound if enabled and available
+    if [ "$STARTUP_SOUND" = 'true' ] && [ -f "$STARTUP_SOUND_FILE" ]; then
+        echo_bg_cmd "play \"$STARTUP_SOUND_FILE\"";
+    fi
+    
+    #Display Startup Notification Dialog it enabled and available
+    if [ "$NOTIFICATION_DIALOG" = 'true' ]; then
+        #Determine startup notification text, either  via program return or text.
+        if [ -x "$NOTIFICATION_TEXT" ]; then
+            text=$(eval $NOTIFICATION_TEXT);
+        else 
+            text="$NOTIFICATION_TEXT"; 
+        fi; 
+    
+        if [ "$text" ]; then
+            $ds_loadnotify $text
+        fi
+    fi
+    
+    #Poll for the window manager startup to find when the window manager has started
+    say "Checking for running window manager @ $(cut -d " " -f22 /proc/self/stat)";
+    for x in $(seq 1 $TIMES_TO_CHECK); do
+        sleep 0.5;
+        wm_started=$(pgrep -P $$ -fx $WM_EXEC) && break;
+        wm_started=${wm_started:-$(pgrep -P $$ -f $wm)} && break;
+    done
+    
+    #Start loading desktop apps if window manager has started or forced via config file
+    if [ "$wm_started" ] || [ "$FORCE_LOAD" = "true" ]; then
+        say "Window manager running or setup forced, setting up desktop @ $(cut -d " " -f22 /proc/self/stat)";
+        
+        #Delay session startup by the amount the user finds fitting
+        say "Delaying session startup by $STARTUP_DELAY seconds";
+        sleep $STARTUP_DELAY;
+        
+        #Start icon manager and set wallpaper
+        case $im in
+            rox)   echo_bg_cmd rox --pinboard=antiX-$wm  ;;
+            space) echo_bg_cmd spacefm --desktop         ;;
+            none)                                        ;;
+            *)     warn "Unknown icon-manager: $im"      ;;
+        esac
+        
+        #Set wallpaper
+        sleep 1 &&  echo_cmd desktop-session-wallpaper;
+        
+        #Check array to see if the window manager supports the standard xdg autostart directories.
+        #If the window manager does not support it (it is in the array) and the user wants to 
+        #support it, we will support it here.
+        wm_non_autostart=$(echo "$non_autostart" | grep -o "$wm")
+        if [ "$wm" = "$wm_non_autostart" ] && [ "$LOAD_XDG_AUTOSTART" = "true" ]; then
+            if [ ! -d $user_xdg_autostart ]; then
+                mkdir -p "$user_xdg_autostart" ;
+                cp "$main_xdg_autostart/*" "$user_xdg_autostart";
+            fi
+            
+            for files in $(find $user_xdg_autostart |sed "s/\ //ig")
+            do
+                exec=$(cat $files | grep "Exec=" |cut -d "=" -f2)
+                echo_eval_cmd $exec;
+            done
+        fi
+        
+        #Maybe we do not want to use the autostart directory, but we would like to add something to the session startup.
+        #Then we will read /etc/desktop-session/startup file.
+        if [ "$LOAD_STARTUP_FILE" = "true" ]; then
+            if [ -x "$ds_startup" ]; then
+                echo_bg_cmd $ds_startup;
+            else
+                warn "Startup file is enabled but there is no startup file or it is not executable"
+            fi
+        fi
+        
+        #Check if the user would like to run the session specific conky or not.
+        if [ "$LOAD_CONKY" = "true" ]; then
+            if [ -f "$conky_dir/$wm-conkyrc" ]; then
+                echo_bg_cmd sleep $STARTUP_DELAY && conky -c $conky_dir/$wm-conkyrc && wmctrl -F -r "Conky ($(hostname))" -b add,below ;
+            else
+                echo_bg_cmd sleep $STARTUP_DELAY && conky && wmctrl -F -r "Conky ($(hostname))" -b add,below ;
+            fi
+        fi
+        
+    else 
+        shout "Window Manager not found to be running after $TIMES_TO_CHECK checks";
+        shout "Currently the desktop environment will not start :P";
+        shout "Give Up Time:$(cut -d " " -f22 /proc/self/stat)";
+    fi
+    
+    #Kill Startup Notification Dialog (if pid file exists)
+    [ -r $ds_notification_pid ] && kill `cat $ds_notification_pid`;
+    
+    
+    
+}
+#Get the desktop code if restart is requested
+get_restart_code() {
+    local file=$1
+    unset RESTART_CODE 
+    [ -r $file ] || return 1
+
+    if is_stale $file $stale_time; then
+        warn "Ignoring stale restart file: $file"
+        rm -f $file
+        return 1
+    fi
+
+    local restart=$(cat $file 2>/dev/null)
+    rm -f $file
+    RESTART_CODE=$restart
+
+    [ "$RESTART_CODE" ] && return 0
+
+    warn "Empty restart file: $file"
+    return 1
+}
+
+#Check if restart file and contents are stale
+is_stale() {
+    local file=$1 time=$2
+
+    # Return early if parameter missing but don't claim file was stale
+    [ -n "$file" -a -n "$time" ] || return 1
+    local now=$(date +%s)  ftime=$(stat --format %Y $file)
+    [ $((now - ftime)) -gt $time ]
+    return $?
 }
 
 #Get the executable file for the window manager in the provided code.
@@ -191,6 +346,7 @@ shout "Started $(date) Start_time: $start_time"
 shout "PID: $$"
 shout "Logging to: $ds_log_file"
 
+#main "$@" >> $log_file 2>&1
 main "$@" 
 
 shout "exiting normally"

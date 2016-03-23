@@ -33,7 +33,7 @@ fatal() {
     echo -e "$RED"
     shout "Fatal Error: $*" 
     echo -e "$NO_COLOR"
-    #exit 2
+    exit 2
 }
 
 warn() { 
@@ -70,4 +70,13 @@ echo_bg_cmd() {
     "$@" &
 }
 
+plural() {
+    local n=$1 str=$2
+    case $n in
+        1) local s=  ies=y   are=is    have=has;;
+        *) local s=s ies=ies are=are   have=have;;
+    esac
+    echo "$str" | sed -e "s/%s/$s/g" -e "s/%ies/$ies/g"  \
+        -e "s/%are/$are/g" -e "s/%have/$have/" -e "s/%n/$n/g"
+}
 

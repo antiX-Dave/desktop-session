@@ -1,16 +1,15 @@
 #!/bin/bash
 #Name: ds-first-run
 #Purpose: setup desktop-session session files and other items to build
-a session (build menus, copy desktop icons, etc)
+#a session (build menus, copy desktop icons, etc)
 #Author: Dave. david at daveserver dot info
 
 #Load File Mappings
-. ./desktop-session-file-locations.sh
-#Load "speech" for loging / displaying information to errors
-. $std_log_speech
+. /usr/local/lib/desktop-session/ds-file-locations
 
-#Skel directory
-SKEL="/etc/skel/.desktop-session"
+#Load "speech" for loging / displaying information to errors setting LOG
+LOG="$ds_log_file";
+. $std_log_speech
 
 #Check for configuration directory, otherwise copy from skel
 [ ! -d $ds_config_dir ] && echo_cmd cp $SKEL $ds_config_dir;
@@ -36,4 +35,5 @@ cp /usr/share/applications/antix/antixsources.desktop $XDG_DESKTOP_DIR
 
 #Make trigger file to avoid consuming time running the above checks and 
 #commands every startup event.
+#This should be the last line in this script.
 touch $ds_first_run_trigger

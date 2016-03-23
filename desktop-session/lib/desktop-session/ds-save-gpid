@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#Load File Mappings
+. /usr/local/lib/desktop-session/ds-file-locations
+
+#Load "speech" for loging / displaying information to errors setting LOG
+LOG="$ds_log_file";
+. $std_log_speech
+
+#Load Main Configuration
+. $ds_lib_main
+
+gpid=$(cut -d" " -f5 /proc/$$/stat)
+log "$ME: save gpid: $gpid"
+echo $gpid > $gpid_file

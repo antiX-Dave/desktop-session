@@ -8,7 +8,7 @@ import signal
 import os
 
 pid = str(os.getpid())
-pidfile = os.path.expanduser("~/.desktop-session/ds-loading.pid")
+pidfile = os.path.expanduser("~/.desktop-session/run/ds-loading.pid")
 writepid = open(pidfile, "w")
 writepid.write("%s" % os.getpid())
 writepid.close()
