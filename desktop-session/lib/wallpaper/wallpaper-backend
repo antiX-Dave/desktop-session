@@ -1,0 +1,70 @@
+#!/bin/bash
+
+random_select() {
+    wallpaper_folder="$(cat $wallpaper_conf | grep '^FOLDER' |cut -d '=' -f2 |cut -d " " -f2)";
+    alist=( $(ls -w1 $wallpaper_folder ) );
+    range=${#alist[*]};
+    show=$(( $RANDOM % $range ));
+    file=""$wallpapers/${alist[$show]}"";
+    wallpaper=""$wallpaper_folder""$file"";
+    sedfile=${wallpaper//\//\\\/};
+    sed -i "s/^$DESKTOP_SESSION_CODE=.*/$DESKTOP_SESSION_CODE=$sedfile/" $wallpaper_list_conf;
+}
+
+wallpaper_set() {
+    
+    wallpaper=${wallpaper:-$(cat $wallpaper_list_conf | grep "^$DESKTOP_SESSION_CODE" |cut -d '=' -f2 )} #|sed "s/\ /\\\ /ig")}
+    
+    case $DESKTOP_SESSION_IM in
+        rox)
+            Rox-Wallpaper "$wallpaper" &
+            feh --bg-$style "$wallpaper" &
+            ;;
+        space)
+            spacefm --set-wallpaper "$wallpaper" &
+            feh  --bg-$style "$wallpaper" &
+            ;;
+        *)
+            feh  --bg-$style "$wallpaper" &
+            ;;
+    esac
+}
+
+#######START########
+IFS='
+'
+type="$(cat $wallpaper_conf | grep '^TYPE' |cut -d '=' -f2 |cut -d ' ' -f2)"
+style="$(cat $wallpaper_conf | grep '^STYLE' |cut -d '=' -f2 |cut -d ' ' -f2)"
+delay="$(cat $wallpaper_conf | grep '^DELAY' |cut -d '=' -f2 |cut -d ' ' -f2)"
+
+case "$type" in
+    random)
+        random_select
+        wallpaper_set 
+        ;;
+        
+    random-time)
+        ppid="$$"
+        yad --notification --command="kill $(cat $wallpaper_pid_file)" --text="click this icon to kill random wallpaper timed" --image="wallpaper" & cpid="$!"
+        echo "$ppid $cpid" > $wallpaper_pid_file
+        while true; do
+            random_select
+            wallpaper_set 
+            sleep $delay
+        done
+        ;;
+        
+    static)
+        wallpaper_set 
+        ;;
+        
+    color)
+        imported_color=$(cat $wallpaper_conf | grep '^COLOR' |cut -d '=' -f2 |cut -d ' ' -f2)
+        xsetroot -solid "#$imported_color" &
+        ;;
+
+    *)
+        say "There was no valid style for wallpaper setting found, defaulting to grey background";
+        xsetroot -solid "#8a8a8a";
+        ;;
+esac

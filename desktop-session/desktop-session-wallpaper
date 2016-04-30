@@ -1,0 +1,40 @@
+#!/bin/bash
+#Name: desktop-session-wallpaper
+#Purpose: Wrapper script for the wallpaper.py and wallpaper-backend scripts.
+#         Setting a environment for both scripts so that there is a common
+#         file to set the locations of the various items. (wallpaper-file-locations)
+
+#Load file locations
+. /usr/local/lib/wallpaper/wallpaper-file-locations
+
+help() {
+    cat << end-of-message
+Usage:
+  -s --set     | Run the wallpaper backend to set the desktop wallpaper_set
+  -h --help    | Show this help Dialog
+  *            | Run the wallpaper selection frontend
+
+end-of-message
+    
+}
+
+export DESKTOP_SESSION_CODE=${DESKTOP_SESSION_CODE:-$(cat $desktop_file)}
+export DESKTOP_SESSION_WM=${DESKTOP_SESSION_WM:-${DESKTOP_SESSION_CODE#*-}}
+export DESKTOP_SESSION_IM=${DESKTOP_SESSION_IM:-${DESKTOP_SESSION_CODE%-$DESKTOP_SESSION_WM}}
+
+[ ! -d $wallpaper_conf_dir ] && cp $wallpaper_skel_dir $wallpaper_conf_dir
+[ ! -f $wallpaper_conf ] && cp $wallpaper_skel_dir/$(basename $wallpaper_conf) $wallpaper_conf
+export wallpaper_conf
+[ ! -f $wallpaper_list_conf ] && cp $wallpaper_skel_dir/$(basename $wallpaper_list_conf) $wallpaper_list_conf
+export wallpaper_list_conf
+[ ! -d $wallpaper_run_dir ] && mkdir -p $wallpaper_run_dir
+[ ! -f $wallpaper_pid_file ] && touch $wallpaper_pid_file
+export wallpaper_pid_file
+export wallpaper_backend
+
+
+case $1 in 
+-s|--set)  $wallpaper_backend ;;
+-h|--help) help               ;;
+*)         $wallpaper_gui     ;;
+esac

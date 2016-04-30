@@ -71,5 +71,5 @@ slim_conf="/etc/slim.conf";
 edit_list="$ds_config $ds_first_run $ds_startup $ds_compare";
 
 #Start Editor with edit files if called directly and not sourced.
-[[ $pathname = $0 ]] && exec "desktop-defaults-run -te $edit_list";
+#[[ $pathname = $0 ]] && exec "desktop-defaults-run -te $edit_list";
 

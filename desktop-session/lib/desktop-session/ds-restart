@@ -116,4 +116,4 @@ cycle_icons() { cycle $1 space none rox  ;}
 cycle_wms()   { cycle $1 $(raw_wm_list)  ;}
 
 
-main "$@" >> $log_file 2>&1
+main "$@" >> $LOG 2>&1

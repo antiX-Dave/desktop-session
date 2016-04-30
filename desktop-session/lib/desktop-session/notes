@@ -1,0 +1,5 @@
+#NOTES
+
+1) Update ds-update-slim
+2) Try to combine ds-update-slim and ds-update-wm-menus as they perform the same function in different areas
+3) apt hook for updating and adding desktops

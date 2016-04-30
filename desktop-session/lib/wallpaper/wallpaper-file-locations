@@ -1,0 +1,27 @@
+#!/bin/bash
+#Name: wallpaper-file-locations
+#Purpose: Set where various wallpaper files and scripts will be
+#Author: Dave. david at daveserver dot info
+
+pathname="$_";
+disp=${DISPLAY#:}
+disp=${disp%.[0-9]}
+
+#Directories
+wallpaper_conf_dir="$HOME/.desktop-session/wallpaper"
+wallpaper_lib_dir="/usr/local/lib/wallpaper"
+wallpaper_share_dir="/usr/local/share/wallpaper"
+wallpaper_skel_dir="/etc/skel/.desktop-session/wallpaper"
+wallpaper_run_dir="$wallpaper_conf_dir/run"
+wallpaper_dirs=("/usr/share/wallpaper" "$HOME/Wallpaper")
+
+#Configurations
+wallpaper_conf="$wallpaper_conf_dir/wallpaper.conf"
+wallpaper_list_conf="$wallpaper_conf_dir/wallpaper-list.conf"
+desktop_file="$wallpaper_conf_dir/run/desktop-code.$disp";
+wallpaper_pid_file="$wallpaper_run_dir/wallpaper-pid";
+
+#Scripts
+wallpaper_gui="$wallpaper_lib_dir/wallpaper.py"
+wallpaper_backend="$wallpaper_lib_dir/wallpaper-backend"
+std_log_speech="/usr/local/lib/desktop-session/std-log-speech";
