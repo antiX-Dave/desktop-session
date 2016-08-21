@@ -1,0 +1,9 @@
+#!/bin/bash
+#Name: dd-file-locations
+#Purpose: Set where various desktop-defaults files and scripts will be
+#Author: Dave. david at daveserver dot info
+
+user_mime_list="$HOME/.config/mimeapps.list"
+user_compat_mime_list="$HOME/.local/share/applications/mimeapps.list"
+global_modified_mime_list="/etc/xdg/mimeapps.list"
+global_mime_list=("/usr/share/applications/mimeapps.list" "/usr/local/share/applications/mimeapps.list")

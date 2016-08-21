@@ -1,9 +1,0 @@
-#!/bin/bash
-. ./desktop-session-file-locations.sh
-cp $main_config $user_config;
-
-cp /usr/share/applications/spacefm.desktop $XDG_DESKTOP_DIR;
-cp /usr/share/applications/iceweasel.desktop $XDG_DESKTOP_DIR;
-cp /usr/share/applications/antix/Install.desktop $XDG_DESKTOP_DIR;
-cp /usr/share/applications/roxterm.desktop $XDG_DESKTOP_DIR;
-cp /usr/share/applications/antix/xmms.desktop $XDG_DESKTOP_DIR;

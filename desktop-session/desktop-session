@@ -158,7 +158,7 @@ launch_desktop() {
         esac
         
         #Set wallpaper
-        sleep 1 &&  echo_cmd desktop-session-wallpaper -s;
+        sleep 1 &&  echo_cmd desktop-session-wallpaper -s &
         
         #Check array to see if the window manager supports the standard xdg autostart directories.
         #If the window manager does not support it (it is in the array) and the user wants to 
