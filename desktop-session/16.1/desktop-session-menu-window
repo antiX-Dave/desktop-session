@@ -1,0 +1,7 @@
+#!/bin/bash
+
+OLDIFS="$IFS"
+IFS="|"
+SWITCH_WM_EXEC=$(yad --width=685 --height=350 --title="Other Desktops" --text="Your window manager was not one of the supported window managers. This window is to provide the same function as the Other Desktops menu" --list --radiolist --column="" --column="Session Name" --column="Session Exec" `cat /usr/share/desktop-session/wm-menus/RAW-wm-menu` --print-column=3)
+eval $SWITCH_WM_EXEC
+IFS="$OLDIFS"
