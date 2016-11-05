@@ -6,10 +6,10 @@ BYPASS=0
 if ! grep "bypass" <<< "$@" &&  [ $BYPASS = 1 ] ; then 
     exit; 
 else
-    if [ $BYPASS = 1 ] ; then
-        BUTTON="--button=Unhide:3"
-    else
+    if [ $BYPASS = 0 ] ; then
         BUTTON="--button=Hide:3"
+    else
+        BUTTON="--button=Unhide:3"
     fi
 fi
 
@@ -25,11 +25,11 @@ do
         ;;
         1)  break  ;;
         2)  antixcc.sh & ;;
-        3)  case $BYPASS in
-                0) sed -i "s/^BYPASS=.*/BYPASS=1/g" $0 ;;
-                1) sed -i "s/^BYPASS=.*/BYPASS=0/g" $0 ;;
-                *) echo "Not a valid value for BYPASS" ;;
-            esac
+        3)  if [ $BYPASS = 0 ] ; then
+                sed -i "s/^BYPASS=.*/BYPASS=1/g" $0
+            else
+                sed -i "s/^BYPASS=.*/BYPASS=0/g" $0
+            fi  
             break ;;
         *)  echo "Not sure what to do with value $?" ;
             break ;;
