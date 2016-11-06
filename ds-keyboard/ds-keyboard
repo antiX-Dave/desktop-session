@@ -1,0 +1,6 @@
+#!/bin/bash
+#Name: ds-keyboard
+#Depends: ds-keyboard.py, setxkbd
+#Author: Dave (david@daveserver.info)
+#Purpose: Configure keyboard on per user basis for a session.
+
